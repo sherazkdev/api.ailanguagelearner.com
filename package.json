@@ -1,0 +1,10 @@
+{
+  "name": "ai-language-api",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix api",
+    "dev:admin": "npm run dev --prefix admin",
+    "seed": "npm run seed --prefix api",
+    "install:all": "npm install --prefix api && npm install --prefix admin"
+  }
+}

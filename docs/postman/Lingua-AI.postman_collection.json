@@ -1,0 +1,167 @@
+{
+  "info": {
+    "name": "Lingua AI API",
+    "description": "Import in Postman. Auth: only x-api-key header (collection level). DB reset: npm run reset-db in api/",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://127.0.0.1:3000" },
+    { "key": "apiKey", "value": "dev-lingua-api-key-change-me" },
+    { "key": "deviceId", "value": "postman-test-001" },
+    { "key": "typeIdDailyLife", "value": "6aad1330c4c80e9225aadb3a" },
+    { "key": "typeSlugDailyLife", "value": "daily-life" },
+    { "key": "chatId", "value": "6aad133b2fca43fb69232572" }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      { "key": "key", "value": "x-api-key", "type": "string" },
+      { "key": "value", "value": "{{apiKey}}", "type": "string" },
+      { "key": "in", "value": "header", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health (no key)",
+      "request": {
+        "auth": { "type": "noauth" },
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/health"
+      }
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Subscribe user",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceId\": \"{{deviceId}}\",\n  \"subscriptionActive\": true,\n  \"subscriptionProvider\": \"google\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/users/subscribe"
+          }
+        },
+        {
+          "name": "Get user",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/v1/users/{{deviceId}}"
+          }
+        },
+        {
+          "name": "List users (admin)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/v1/users"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Conversation Types",
+      "item": [
+        {
+          "name": "List all types",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/v1/conversation-types"
+          }
+        },
+        {
+          "name": "List types (filter daily_life)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/v1/conversation-types?filter=daily_life"
+          }
+        },
+        {
+          "name": "Get one type by slug",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/v1/conversation-types/{{typeSlugDailyLife}}"
+          }
+        },
+        {
+          "name": "Get one type by id",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/v1/conversation-types/{{typeIdDailyLife}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chats",
+      "item": [
+        {
+          "name": "Create role_play chat",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceId\": \"{{deviceId}}\",\n  \"mode\": \"role_play\",\n  \"learningLanguageName\": \"Spanish\",\n  \"typeId\": \"{{typeIdDailyLife}}\",\n  \"difficultyKey\": \"dl_beginner\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/chats"
+          }
+        },
+        {
+          "name": "Create free_chat",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceId\": \"{{deviceId}}\",\n  \"mode\": \"free_chat\",\n  \"learningLanguageName\": \"Spanish\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/chats"
+          }
+        },
+        {
+          "name": "List chats",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/v1/chats?deviceId={{deviceId}}"
+          }
+        },
+        {
+          "name": "Get one chat",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/v1/chats/{{chatId}}?deviceId={{deviceId}}"
+          }
+        },
+        {
+          "name": "Get messages",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/v1/chats/{{chatId}}/messages?deviceId={{deviceId}}"
+          }
+        },
+        {
+          "name": "Send message (AI)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceId\": \"{{deviceId}}\",\n  \"userMessage\": \"Hola, quiero practicar\"\n}"
+            },
+            "url": "{{baseUrl}}/v1/chats/{{chatId}}/messages"
+          }
+        },
+        {
+          "name": "Delete chat",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/v1/chats/{{chatId}}?deviceId={{deviceId}}"
+          }
+        }
+      ]
+    }
+  ]
+}
