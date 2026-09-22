@@ -2,6 +2,8 @@ import 'dotenv/config';
 import mongoose from 'mongoose';
 import { env } from '../config/env.js';
 import { ConversationTypeModel } from '../modules/conversation-types/conversation-type.model.js';
+import { TopicModel } from '../modules/topics/topic.model.js';
+import { TOPICS_BY_TYPE_SLUG } from './topic-seed-data.js';
 
 const TYPES = [
   {
@@ -80,10 +82,27 @@ const TYPES = [
 
 async function seed() {
   await mongoose.connect(env.MONGODB_URI);
+  await TopicModel.deleteMany({});
   await ConversationTypeModel.deleteMany({});
-  await ConversationTypeModel.insertMany(TYPES.map((t) => ({ ...t, isActive: true })));
+  const types = await ConversationTypeModel.insertMany(TYPES.map((t) => ({ ...t, isActive: true })));
+
+  const topicDocs = types.flatMap((type) => {
+    const seeds = TOPICS_BY_TYPE_SLUG[type.slug] ?? [];
+    return seeds.map((topic, index) => ({
+      typeId: type._id,
+      slug: topic.slug,
+      title: topic.title,
+      description: topic.description,
+      sortOrder: index + 1,
+      isActive: true,
+    }));
+  });
+
+  await TopicModel.insertMany(topicDocs);
+
   const typeCount = await ConversationTypeModel.countDocuments();
-  console.log(`Seed complete: ${typeCount} conversation types`);
+  const topicCount = await TopicModel.countDocuments();
+  console.log(`Seed complete: ${typeCount} conversation types, ${topicCount} topics`);
   await mongoose.disconnect();
 }
 

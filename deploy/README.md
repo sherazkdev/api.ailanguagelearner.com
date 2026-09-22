@@ -46,9 +46,16 @@ sudo nginx -t && sudo systemctl reload nginx
 ## Update after code pull
 
 ```bash
-cd /var/www/ai-language-api/api
+cd /var/www/ai-language-api
 git pull
+cd api
 npm install
 npm run build
-pm2 restart lingua-ai-api
+npm run seed
+export LINGUA_APP_DIR=/var/www/ai-language-api
+pm2 delete lingua-ai-api 2>/dev/null || true
+pm2 start ../deploy/ecosystem.config.cjs
+pm2 save
 ```
+
+PM2 runs **2 cluster workers** by default (`PM2_INSTANCES=2`). Scale with `PM2_INSTANCES=4 pm2 start ...`.

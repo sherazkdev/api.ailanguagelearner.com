@@ -10,6 +10,7 @@ import { swaggerPlugin } from './plugins/swagger.js';
 import { registerErrorHandler } from './plugins/error-handler.js';
 import { usersRoutes } from './modules/users/users.routes.js';
 import { conversationTypesRoutes } from './modules/conversation-types/conversation-types.routes.js';
+import { topicsRoutes } from './modules/topics/topics.routes.js';
 import { chatsRoutes } from './modules/chats/chats.routes.js';
 
 export async function buildApp() {
@@ -54,6 +55,7 @@ export async function buildApp() {
   );
 
   await app.register(conversationTypesRoutes);
+  await app.register(topicsRoutes);
   await app.register(usersRoutes);
   await app.register(chatsRoutes);
 

@@ -11,6 +11,14 @@ type ConversationType = {
   description: string;
   iconKey: string;
   filterGroup: string;
+  topicsCount?: number;
+};
+
+type Topic = {
+  _id: string;
+  slug: string;
+  title: string;
+  description: string;
 };
 
 type Chat = {
@@ -49,6 +57,8 @@ export default function App() {
   const [health, setHealth] = useState('…');
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('all');
   const [types, setTypes] = useState<ConversationType[]>([]);
+  const [selectedType, setSelectedType] = useState<ConversationType | null>(null);
+  const [topics, setTopics] = useState<Topic[]>([]);
   const [deviceId, setDeviceId] = useState(() => localStorage.getItem('lingua_device') ?? 'device-demo-001');
   const [userId, setUserId] = useState(() => localStorage.getItem('lingua_user') ?? '');
   const [language, setLanguage] = useState('Spanish');
@@ -113,10 +123,25 @@ export default function App() {
     }
   }
 
-  async function startRolePlay(type: ConversationType) {
+  async function loadTopics(type: ConversationType) {
     if (type.slug === 'ai-conversation') {
       return startFreeChat();
     }
+    setBusy(true);
+    setError(null);
+    try {
+      const d = await api<{ topics: Topic[] }>(`/v1/conversation-types/${type.slug}/topics`);
+      setSelectedType(type);
+      setTopics(d.topics);
+      pushLog(`Loaded ${d.topics.length} topics for ${type.title}`);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function startRolePlayWithTopic(type: ConversationType, topic: Topic) {
     setBusy(true);
     setError(null);
     try {
@@ -127,12 +152,13 @@ export default function App() {
           mode: 'role_play',
           learningLanguageName: language,
           typeId: type._id,
+          topicId: topic._id,
           difficultyKey,
         }),
       });
       setActiveChatId(String(d.chat.id));
       setMessages([]);
-      pushLog(`Created role_play chat ${d.chat.id} for ${type.title}`);
+      pushLog(`Created role_play chat ${d.chat.id} · ${topic.title}`);
       await refreshChats();
       setTab('playground');
     } catch (e) {
@@ -140,6 +166,10 @@ export default function App() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function startRolePlay(type: ConversationType) {
+    await loadTopics(type);
   }
 
   async function startFreeChat() {
@@ -297,14 +327,39 @@ export default function App() {
                   <div className="card">
                     <strong>{t.title}</strong>
                     <span>{t.description}</span>
-                    <em>{t.slug}</em>
+                    <em>
+                      {t.slug}
+                      {typeof t.topicsCount === 'number' && t.slug !== 'ai-conversation'
+                        ? ` · ${t.topicsCount} topics`
+                        : ''}
+                    </em>
                     <button type="button" disabled={busy} onClick={() => void startRolePlay(t)}>
-                      {t.slug === 'ai-conversation' ? 'Start free chat' : 'Start role play'}
+                      {t.slug === 'ai-conversation' ? 'Start free chat' : 'Choose topic'}
                     </button>
                   </div>
                 </li>
               ))}
             </ul>
+            {selectedType && topics.length > 0 && (
+              <section className="panel topics">
+                <h2>
+                  Topics · {selectedType.title}
+                  <button type="button" className="linkish" onClick={() => { setSelectedType(null); setTopics([]); }}>
+                    Close
+                  </button>
+                </h2>
+                <ul>
+                  {topics.map((topic) => (
+                    <li key={topic._id}>
+                      <button type="button" disabled={busy} onClick={() => void startRolePlayWithTopic(selectedType, topic)}>
+                        <strong>{topic.title}</strong>
+                        <span>{topic.description}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
           </section>
         )}
 

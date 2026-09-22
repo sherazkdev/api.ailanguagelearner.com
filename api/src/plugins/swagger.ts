@@ -15,6 +15,7 @@ export const swaggerPlugin = fp(async (app) => {
         { name: 'Health' },
         { name: 'Users' },
         { name: 'ConversationTypes' },
+        { name: 'Topics' },
         { name: 'Chats' },
       ],
       components: {

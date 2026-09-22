@@ -50,8 +50,10 @@ npm run dev            # http://127.0.0.1:5173
 | GET | `/v1/users` | List users (admin) |
 | GET | `/v1/conversation-types` | Types screen (+ `?filter=`) |
 | POST | `/v1/conversation-types` | Create type (admin) |
+| GET | `/v1/conversation-types/:slugOrId` | One type |
+| GET | `/v1/conversation-types/:slugOrId/topics` | Topics for role-play (Flow 1) |
 | GET | `/v1/chats?deviceId=` or `?userId=` | User chats |
-| POST | `/v1/chats` | Create chat (stores prompt) |
+| POST | `/v1/chats` | Create chat — role_play needs `typeId` + `topicId` |
 | GET | `/v1/chats/:id?deviceId=` or `?userId=` | One chat |
 | GET | `/v1/chats/:id/messages?deviceId=` or `?userId=` | History |
 | POST | `/v1/chats/:id/messages` | Send message → AI |
@@ -59,4 +61,4 @@ npm run dev            # http://127.0.0.1:5173
 
 ## Modules (`api/src/modules`)
 
-`users` · `conversation-types` · `chats` — each has model + service + routes.
+`users` · `conversation-types` · `topics` · `chats` — each has model + service + routes.

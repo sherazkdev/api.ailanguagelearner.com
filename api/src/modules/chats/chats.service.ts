@@ -2,6 +2,7 @@ import { Types } from 'mongoose';
 import { ChatModel } from './chat.model.js';
 import { MessageModel } from './message.model.js';
 import { conversationTypesService } from '../conversation-types/conversation-types.service.js';
+import { topicsService } from '../topics/topics.service.js';
 import { usersService } from '../users/users.service.js';
 import {
   buildFreeChatPrompt,
@@ -15,6 +16,7 @@ import {
   buildOwnerFilter,
   type OwnerIdentity,
 } from '../../shared/owner-identity.js';
+import { parseObjectId } from '../../shared/object-id.js';
 
 const DIFFICULTY_LABELS: Record<string, string> = {
   dl_beginner: 'Beginner',
@@ -23,31 +25,7 @@ const DIFFICULTY_LABELS: Record<string, string> = {
 };
 
 function chatOwnerFilter(chatId: string, identity: OwnerIdentity) {
-  return { _id: chatId, ...buildOwnerFilter(identity) };
-}
-
-function toChatResponse(chat: {
-  _id: Types.ObjectId;
-  deviceId?: string | null;
-  userId?: string | null;
-  mode: string;
-  title: string;
-  typeId: Types.ObjectId;
-  learningLanguageName: string;
-  createdAt: Date;
-  updatedAt: Date;
-}) {
-  return {
-    id: chat._id,
-    deviceId: chat.deviceId ?? undefined,
-    userId: chat.userId ?? undefined,
-    mode: chat.mode,
-    title: chat.title,
-    typeId: chat.typeId,
-    learningLanguageName: chat.learningLanguageName,
-    createdAt: chat.createdAt,
-    updatedAt: chat.updatedAt,
-  };
+  return { _id: parseObjectId(chatId, 'chatId'), ...buildOwnerFilter(identity) };
 }
 
 export const chatsService = {
@@ -56,6 +34,7 @@ export const chatsService = {
       .sort({ lastMessageAt: -1 })
       .select('-systemInstruction')
       .populate('typeId', 'title slug iconKey filterGroup')
+      .populate('topicId', 'title slug')
       .lean();
   },
 
@@ -63,6 +42,7 @@ export const chatsService = {
     const chat = await ChatModel.findOne(chatOwnerFilter(chatId, identity))
       .select('-systemInstruction')
       .populate('typeId', 'title slug iconKey')
+      .populate('topicId', 'title slug')
       .lean();
     if (!chat) throw new AppError(404, 'Chat not found');
     return chat;
@@ -72,35 +52,47 @@ export const chatsService = {
     mode: 'role_play' | 'free_chat';
     learningLanguageName: string;
     typeId?: string;
+    topicId?: string;
     difficultyKey?: string;
   }) {
     assertOwnerIdentity(input);
     await usersService.touch(input);
 
+    const language = input.learningLanguageName.trim().slice(0, 80);
+    if (!language) throw new AppError(400, 'learningLanguageName is required');
+
     let systemInstruction: string;
     let title: string;
     let typeId: Types.ObjectId;
+    let topicId: Types.ObjectId | undefined;
 
     if (input.mode === 'free_chat') {
+      if (input.topicId) {
+        throw new AppError(400, 'free_chat does not use topicId — start direct chat');
+      }
       const freeType = await conversationTypesService.getBySlugOrId('ai-conversation');
       typeId = freeType._id as Types.ObjectId;
       title = 'AI Conversation';
-      systemInstruction = buildFreeChatPrompt(input.learningLanguageName);
+      systemInstruction = buildFreeChatPrompt(language);
     } else {
-      if (!input.typeId) {
-        throw new AppError(400, 'role_play requires typeId');
-      }
+      if (!input.typeId) throw new AppError(400, 'role_play requires typeId');
+      if (!input.topicId) throw new AppError(400, 'role_play requires topicId');
+
       const type = await conversationTypesService.getBySlugOrId(input.typeId);
       if (type.slug === 'ai-conversation') {
         throw new AppError(400, 'Use mode free_chat for AI Conversation type');
       }
-      const difficultyKey = input.difficultyKey ?? 'dl_beginner';
+
       typeId = type._id as Types.ObjectId;
-      title = type.title;
+      const topic = await topicsService.getByIdForType(input.topicId, typeId);
+      topicId = topic._id as Types.ObjectId;
+      title = topic.title;
+
+      const difficultyKey = input.difficultyKey ?? 'dl_beginner';
       systemInstruction = buildRolePlayPrompt({
-        topicTitle: type.title,
-        topicDescription: type.description,
-        learningLanguageName: input.learningLanguageName,
+        topicTitle: topic.title,
+        topicDescription: topic.description,
+        learningLanguageName: language,
         difficultyLabel: DIFFICULTY_LABELS[difficultyKey] ?? 'Beginner',
         difficultyGuide: difficultyGuideForKey(difficultyKey),
       });
@@ -110,13 +102,25 @@ export const chatsService = {
       deviceId: input.deviceId,
       userId: input.userId,
       typeId,
+      topicId,
       mode: input.mode,
-      learningLanguageName: input.learningLanguageName,
+      learningLanguageName: language,
       systemInstruction,
       title,
     });
 
-    return toChatResponse(chat);
+    return {
+      id: chat._id,
+      deviceId: chat.deviceId ?? undefined,
+      userId: chat.userId ?? undefined,
+      mode: chat.mode,
+      title: chat.title,
+      typeId: chat.typeId,
+      topicId: chat.topicId ?? undefined,
+      learningLanguageName: chat.learningLanguageName,
+      createdAt: chat.createdAt,
+      updatedAt: chat.updatedAt,
+    };
   },
 
   async listMessages(chatId: string, identity: OwnerIdentity) {

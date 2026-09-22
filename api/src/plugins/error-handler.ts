@@ -27,6 +27,19 @@ export function registerErrorHandler(app: FastifyInstance): void {
         details: (error as { validation: unknown }).validation,
       });
     }
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'statusCode' in error &&
+      typeof (error as { statusCode?: unknown }).statusCode === 'number'
+    ) {
+      const fastifyError = error as { statusCode: number; message?: string };
+      if (fastifyError.statusCode >= 400 && fastifyError.statusCode < 500) {
+        return reply.code(fastifyError.statusCode).send({
+          error: fastifyError.message ?? 'Bad request',
+        });
+      }
+    }
     app.log.error(error);
     return reply.code(500).send({ error: 'Internal server error' });
   });

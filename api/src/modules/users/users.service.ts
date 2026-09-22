@@ -27,12 +27,34 @@ export const usersService = {
     subscriptionProvider: string;
   }) {
     assertOwnerIdentity(input);
+    const extra = {
+      subscriptionActive: input.subscriptionActive,
+      subscriptionProvider: input.subscriptionProvider,
+    };
+
+    // Link device + account without duplicate-key crashes on production login.
+    if (input.userId && input.deviceId) {
+      const byUserId = await UserModel.findOne({ userId: input.userId });
+      const byDeviceId = await UserModel.findOne({ deviceId: input.deviceId });
+
+      if (byUserId && byDeviceId && String(byUserId._id) !== String(byDeviceId._id)) {
+        await UserModel.deleteOne({ _id: byDeviceId._id });
+      }
+
+      const base = byUserId ?? byDeviceId;
+      if (base) {
+        const user = await UserModel.findByIdAndUpdate(
+          base._id,
+          { $set: upsertSet({ deviceId: input.deviceId, userId: input.userId }, extra) },
+          { new: true },
+        ).lean();
+        return user!;
+      }
+    }
+
     const user = await UserModel.findOneAndUpdate(
       upsertFilter(input),
-      { $set: upsertSet(input, {
-        subscriptionActive: input.subscriptionActive,
-        subscriptionProvider: input.subscriptionProvider,
-      }) },
+      { $set: upsertSet(input, extra) },
       { upsert: true, new: true },
     ).lean();
     return user;

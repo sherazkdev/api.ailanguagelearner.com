@@ -51,6 +51,7 @@ export const chatsRoutes = fp(async (app) => {
             mode: { type: 'string', enum: ['role_play', 'free_chat'] },
             learningLanguageName: { type: 'string' },
             typeId: { type: 'string' },
+            topicId: { type: 'string', description: 'Required for role_play' },
             difficultyKey: {
               type: 'string',
               enum: ['dl_beginner', 'dl_intermediate', 'dl_advanced'],
@@ -66,10 +67,18 @@ export const chatsRoutes = fp(async (app) => {
             mode: z.enum(['role_play', 'free_chat']),
             learningLanguageName: z.string().min(1),
             typeId: z.string().optional(),
+            topicId: z.string().optional(),
             difficultyKey: z.enum(['dl_beginner', 'dl_intermediate', 'dl_advanced']).optional(),
           })
           .refine((value) => Boolean(value.deviceId || value.userId), {
             message: 'deviceId or userId is required',
+          })
+          .refine(
+            (value) => value.mode !== 'role_play' || Boolean(value.typeId && value.topicId),
+            { message: 'role_play requires typeId and topicId' },
+          )
+          .refine((value) => value.mode !== 'free_chat' || !value.topicId, {
+            message: 'free_chat must not include topicId',
           }),
         request.body,
       );

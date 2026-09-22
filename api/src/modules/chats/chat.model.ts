@@ -7,6 +7,8 @@ const chatSchema = new Schema(
     /** Logged-in user chats (persist across devices) */
     userId: { type: String, index: true, sparse: true },
     typeId: { type: Types.ObjectId, ref: 'ConversationType', required: true },
+    /** Role-play scenario — required for role_play, absent for free_chat */
+    topicId: { type: Types.ObjectId, ref: 'Topic', index: true, sparse: true },
     mode: { type: String, enum: ['role_play', 'free_chat'], required: true },
     learningLanguageName: { type: String, required: true },
     /** Built once at chat create — never require client to resend every message. */
