@@ -54,7 +54,7 @@ HARD RULES:
 
 | Variable | Purpose |
 | --- | --- |
-| `PORT` | Default `3017` (local dev; nginx proxies public domain to this port) |
+| `PORT` | Default `3019` (local dev; nginx proxies public domain to this port) |
 | `HOST` | Default `0.0.0.0` |
 | `MONGODB_URI` | Default `mongodb://127.0.0.1:27017/lingua_ai` |
 | `X_API_KEY` | Required on API calls |

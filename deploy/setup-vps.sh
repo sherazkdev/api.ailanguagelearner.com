@@ -48,7 +48,7 @@ sudo -u "${SUDO_USER:-root}" npm run build
 echo "==> Seeding conversation types (safe to re-run)..."
 sudo -u "${SUDO_USER:-root}" npm run seed || true
 
-echo "==> Starting PM2 on port 3017..."
+echo "==> Starting PM2 on port 3019..."
 export LINGUA_APP_DIR="${APP_DIR}"
 sudo -u "${SUDO_USER:-root}" env LINGUA_APP_DIR="${APP_DIR}" pm2 delete lingua-ai-api 2>/dev/null || true
 sudo -u "${SUDO_USER:-root}" env LINGUA_APP_DIR="${APP_DIR}" pm2 start "${APP_DIR}/deploy/ecosystem.config.cjs"
@@ -63,7 +63,7 @@ systemctl reload nginx
 
 echo
 echo "Done."
-echo "  App:      http://127.0.0.1:3017/health"
+echo "  App:      http://127.0.0.1:3019/health"
 echo "  Public:   http://${SITE_NAME}/health"
 echo "  Swagger:  http://${SITE_NAME}/docs"
 echo "  PM2:      pm2 status"

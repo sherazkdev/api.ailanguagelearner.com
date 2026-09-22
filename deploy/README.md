@@ -5,7 +5,7 @@
 | Layer | Port / path |
 | --- | --- |
 | Nginx (public) | `80` → `ailanguage.recipehubapi.com` |
-| Node API (PM2) | `3017` on `127.0.0.1` |
+| Node API (PM2) | `3019` on `127.0.0.1` |
 | MongoDB | `27017` local |
 
 ## One-time VPS setup
@@ -38,8 +38,8 @@ Point `ailanguage.recipehubapi.com` A record to your VPS IP.
 pm2 status
 pm2 logs lingua-ai-api
 pm2 restart lingua-ai-api
-curl http://127.0.0.1:3017/health
-curl -H "x-api-key: YOUR_KEY" http://127.0.0.1:3017/v1/conversation-types
+curl http://127.0.0.1:3019/health
+curl -H "x-api-key: YOUR_KEY" http://127.0.0.1:3019/v1/conversation-types
 sudo nginx -t && sudo systemctl reload nginx
 ```
 

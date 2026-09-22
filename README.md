@@ -14,7 +14,7 @@ No sockets. Auth: `x-api-key` header.
 
 ## Production (VPS)
 
-Domain: `ailanguage.recipehubapi.com` · API port: `3017` · Nginx + PM2
+Domain: `ailanguage.recipehubapi.com` · API port: `3019` · Nginx + PM2
 
 ```bash
 chmod +x deploy/setup-vps.sh
@@ -33,7 +33,7 @@ cd api
 cp .env.example .env   # set GROQ_API_KEY
 npm install
 npm run seed
-npm run dev            # http://127.0.0.1:3017  docs: /docs
+npm run dev            # http://127.0.0.1:3019  docs: /docs
 
 cd ../admin
 npm install
